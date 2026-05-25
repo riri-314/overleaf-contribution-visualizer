@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,16 +8,44 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --bg:      #f0f2f5;
-      --surface: #ffffff;
-      --border:  #e2e8f0;
-      --primary: #4C72B0;
-      --danger:  #C44E52;
-      --text:    #1a202c;
-      --muted:   #718096;
-      --radius:  10px;
-      --shadow:  0 1px 3px rgba(0,0,0,.07), 0 4px 12px rgba(0,0,0,.05);
+    /* ── Themes ── */
+    :root, [data-theme="light"] {
+      --bg:            #f0f2f5;
+      --surface:       #ffffff;
+      --border:        #e2e8f0;
+      --primary:       #4C72B0;
+      --danger:        #C44E52;
+      --text:          #1a202c;
+      --muted:         #718096;
+      --radius:        10px;
+      --shadow:        0 1px 3px rgba(0,0,0,.07), 0 4px 12px rgba(0,0,0,.05);
+      --error-bg:      #fff5f5;
+      --error-color:   #C44E52;
+      --spinner-track: #cbd5e0;
+      /* Plotly */
+      --plot-bg:       #ffffff;
+      --plot-grid:     #f0f0f0;
+      --plot-line:     #e2e8f0;
+      --plot-font:     #1a202c;
+    }
+
+    [data-theme="dark"] {
+      --bg:            #0d0f1a;
+      --surface:       #141624;
+      --border:        #252840;
+      --primary:       #6b95d4;
+      --danger:        #e06c6c;
+      --text:          #e2e8f0;
+      --muted:         #8892a4;
+      --shadow:        0 1px 3px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.2);
+      --error-bg:      #2a1515;
+      --error-color:   #e06c6c;
+      --spinner-track: #2d3251;
+      /* Plotly */
+      --plot-bg:       #141624;
+      --plot-grid:     #252840;
+      --plot-line:     #252840;
+      --plot-font:     #e2e8f0;
     }
 
     body {
@@ -25,6 +53,7 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      transition: background .2s, color .2s;
     }
 
     /* ── Header ── */
@@ -39,6 +68,7 @@
       position: sticky;
       top: 0;
       z-index: 10;
+      transition: background .2s, border-color .2s;
     }
     header h1 { font-size: .9rem; font-weight: 600; color: var(--muted); }
     header .sep { color: var(--border); font-size: 1.2rem; }
@@ -52,6 +82,30 @@
       gap: .3rem;
     }
     #project-link:hover { text-decoration: underline; }
+
+    /* ── Theme toggle ── */
+    #btn-theme {
+      margin-left: auto;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background .2s, border-color .2s, color .2s;
+      flex-shrink: 0;
+    }
+    #btn-theme:hover { color: var(--text); border-color: var(--muted); }
+    #btn-theme:not(:disabled):active { transform: scale(.92); }
+    #icon-sun  { display: none; }
+    #icon-moon { display: block; }
+    [data-theme="dark"] #icon-sun  { display: block; }
+    [data-theme="dark"] #icon-moon { display: none; }
 
     /* ── Main ── */
     main { max-width: 1400px; margin: 0 auto; padding: 1.25rem 2rem 3rem; }
@@ -72,10 +126,11 @@
       padding: .45rem .9rem;
       font-size: .82rem;
       color: var(--muted);
+      transition: background .2s, border-color .2s;
     }
     .stat b { color: var(--primary); font-weight: 700; }
 
-    .actions { display: flex; gap: .5rem; margin-left: auto; align-items: center; }
+    .actions { display: flex; gap: .5rem; align-items: center; }
 
     button {
       display: inline-flex;
@@ -107,13 +162,18 @@
       margin-bottom: 1rem;
       border: 1px solid var(--border);
       background: var(--surface);
+      transition: background .2s, border-color .2s;
     }
     #status-bar.show     { display: flex; }
-    #status-bar.is-error { border-color: var(--danger); background: #fff5f5; color: var(--danger); }
+    #status-bar.is-error {
+      border-color: var(--danger);
+      background: var(--error-bg);
+      color: var(--error-color);
+    }
 
     .spinner {
       width: 15px; height: 15px;
-      border: 2px solid #cbd5e0;
+      border: 2px solid var(--spinner-track);
       border-top-color: var(--primary);
       border-radius: 50%;
       animation: spin .65s linear infinite;
@@ -127,6 +187,7 @@
       gap: .25rem;
       border-bottom: 2px solid var(--border);
       margin-bottom: 1.25rem;
+      transition: border-color .2s;
     }
     .tab-btn {
       background: none;
@@ -170,6 +231,7 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      transition: background .2s, border-color .2s;
     }
     .chart-card.tall { height: 600px; }
 
@@ -200,6 +262,27 @@
       <path d="M3.5 1H11M11 1V8.5M11 1L1 11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </a>
+
+  <button id="btn-theme" title="Toggle dark mode" aria-label="Toggle dark mode">
+    <!-- Sun (shown in dark mode) -->
+    <svg id="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1"  x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22"  x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3"  y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+    <!-- Moon (shown in light mode) -->
+    <svg id="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>
+    </svg>
+  </button>
 </header>
 
 <main>
@@ -282,6 +365,78 @@
 </main>
 
 <script>
+  // ── Theme ─────────────────────────────────────────────────────────────────
+  const PLOTLY_THEME = {
+    light: {
+      paper_bgcolor: '#ffffff',
+      plot_bgcolor:  '#ffffff',
+      font_color:    '#1a202c',
+      grid_color:    '#f0f0f0',
+      line_color:    '#e2e8f0',
+    },
+    dark: {
+      paper_bgcolor: '#141624',
+      plot_bgcolor:  '#141624',
+      font_color:    '#e2e8f0',
+      grid_color:    '#252840',
+      line_color:    '#252840',
+    },
+  };
+
+  function currentTheme() {
+    return document.documentElement.dataset.theme || 'light';
+  }
+
+  function applyPlotlyTheme(fig) {
+    const t = PLOTLY_THEME[currentTheme()];
+    const layout = fig.layout;
+
+    layout.paper_bgcolor = t.paper_bgcolor;
+    layout.plot_bgcolor  = t.plot_bgcolor;
+    if (!layout.font) layout.font = {};
+    layout.font.color = t.font_color;
+
+    // Update every axis in the figure (handles subplots)
+    for (const key of Object.keys(layout)) {
+      if (/^[xy]axis\d*$/.test(key)) {
+        layout[key].gridcolor      = t.grid_color;
+        layout[key].linecolor      = t.line_color;
+        layout[key].zerolinecolor  = t.line_color;
+        if (!layout[key].tickfont) layout[key].tickfont = {};
+        layout[key].tickfont.color = t.font_color;
+      }
+    }
+
+    // Subplot title annotations
+    if (layout.annotations) {
+      layout.annotations = layout.annotations.map(a => ({
+        ...a, font: { ...(a.font || {}), color: t.font_color },
+      }));
+    }
+
+    // Colorbar
+    if (layout.coloraxis) {
+      layout.coloraxis.colorbar = layout.coloraxis.colorbar || {};
+      layout.coloraxis.colorbar.tickfont = { color: t.font_color };
+    }
+  }
+
+  function setTheme(dark) {
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    renderCharts();
+  }
+
+  // Restore saved theme immediately to avoid flash
+  (function () {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') document.documentElement.dataset.theme = 'dark';
+  })();
+
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    setTheme(currentTheme() !== 'dark');
+  });
+
   // ── Tabs ──────────────────────────────────────────────────────────────────
   document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -289,7 +444,6 @@
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
-      // Plotly needs a resize trigger when panels become visible
       window.dispatchEvent(new Event("resize"));
     });
   });
@@ -351,27 +505,32 @@
       pollTimer = setTimeout(fetchStatus, 1500);
     } else {
       pollTimer = null;
-      if (wasRunning) loadCharts(); // refresh charts after task finishes
+      if (wasRunning) loadCharts();
     }
   }
 
   // ── Chart rendering ───────────────────────────────────────────────────────
-  async function loadCharts() {
-    const res    = await fetch("/api/charts");
-    const charts = await res.json();
+  let _chartsRaw = {};  // cached raw JSON strings from server
 
-    const hasData = Object.keys(charts).length > 0;
-    document.getElementById("no-data").style.display    = hasData ? "none"  : "block";
-    document.getElementById("dashboard").style.display  = hasData ? "block" : "none";
-
+  function renderCharts() {
+    const hasData = Object.keys(_chartsRaw).length > 0;
+    document.getElementById("no-data").style.display   = hasData ? "none"  : "block";
+    document.getElementById("dashboard").style.display = hasData ? "block" : "none";
     if (!hasData) return;
 
-    for (const [id, figJson] of Object.entries(charts)) {
+    for (const [id, figJson] of Object.entries(_chartsRaw)) {
       const el = document.getElementById("chart-" + id);
       if (!el) continue;
-      const fig = JSON.parse(figJson);
+      const fig = JSON.parse(figJson);   // fresh parse so we can mutate safely
+      applyPlotlyTheme(fig);
       Plotly.react(el, fig.data, fig.layout, PLOTLY_CONFIG);
     }
+  }
+
+  async function loadCharts() {
+    const res = await fetch("/api/charts");
+    _chartsRaw = await res.json();
+    renderCharts();
   }
 
   // ── Actions ───────────────────────────────────────────────────────────────
