@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -231,6 +231,7 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      position: relative;
       transition: background .2s, border-color .2s;
     }
     .chart-card.tall { height: 600px; }
@@ -239,6 +240,30 @@
     .chart-card > [id^="chart-"] {
       flex: 1;
       min-height: 0;
+    }
+
+    /* ── Loading overlay (pseudo-elements, no extra DOM) ── */
+    .chart-card.is-loading::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--surface);
+      border-radius: var(--radius);
+      z-index: 2;
+    }
+    .chart-card.is-loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 28px;
+      height: 28px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      z-index: 3;
     }
 
     /* ── Empty state ── */
@@ -427,10 +452,10 @@
     renderCharts();
   }
 
-  // Restore saved theme immediately to avoid flash
+  // Restore saved theme immediately to avoid flash (dark is default)
   (function () {
     const saved = localStorage.getItem('theme');
-    if (saved === 'dark') document.documentElement.dataset.theme = 'dark';
+    if (saved === 'light') document.documentElement.dataset.theme = 'light';
   })();
 
   document.getElementById('btn-theme').addEventListener('click', () => {
@@ -528,9 +553,11 @@
   }
 
   async function loadCharts() {
+    document.querySelectorAll('.chart-card').forEach(c => c.classList.add('is-loading'));
     const res = await fetch("/api/charts");
     _chartsRaw = await res.json();
     renderCharts();
+    document.querySelectorAll('.chart-card').forEach(c => c.classList.remove('is-loading'));
   }
 
   // ── Actions ───────────────────────────────────────────────────────────────
