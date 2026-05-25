@@ -1,0 +1,14 @@
+# Personal config (contains session cookie — do not commit)
+config.json
+
+# Generated data
+usage.json
+diff_cache.json
+
+# Generated charts
+contributions_*.png
+
+# Python
+__pycache__/
+*.pyc
+.venv/
