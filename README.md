@@ -69,47 +69,31 @@ cp config.example.json config.json
 
 ## Usage
 
-### Step 1 — fetch data (incremental)
-
-```bash
-python fetch_diffs.py
-```
-
-- Downloads the update list from the Overleaf API and saves it to `usage.json`.
-- Downloads per-file diffs and caches them in `diff_cache.json`.
-- **Re-running is safe and cheap**: only new updates and missing diffs are fetched.
-
-### Step 2 — generate charts
-
-```bash
-python visualize_contributions.py
-```
-
-Produces six PNG files:
-
-| File | Content |
-|---|---|
-| `contributions_overview.png` | Words inserted/deleted, pie share, cumulative curve, weekly bar, session counts |
-| `contributions_temporal.png` | Heatmap (hour × weekday), hourly activity, sessions per week/day |
-| `contributions_files.png` | Top-20 chapters stacked bar + per-chapter author scatter |
-| `contributions_timeline.png` | Dot strip — one dot per edit session over time |
-| `contributions_intensity.png` | Daily words-written bar chart with peak annotation |
-| `contributions_patterns.png` | Insertions vs. deletions scatter + chapter ownership heatmap |
-
-A text summary is also printed to the terminal.
-
-### Web interface (alternative)
-
 ```bash
 python app.py
 ```
 
-Opens a local web dashboard at `http://localhost:5000` that lets you:
-- See the tracked project (clickable link to Overleaf)
+Open `http://localhost:5000`. From the dashboard you can:
+- See the tracked project — click its name to open it directly in Overleaf
 - See when data was last fetched and how many updates/diffs are cached
-- Click **Fetch Updates** to pull only new changes and regenerate charts
+- Click **Fetch Updates** to pull only new changes (incremental, safe to re-run)
 - Click **Refetch All** to clear the diff cache and re-download everything
-- Browse all six charts in a grid; click any to open it full-size
+
+All charts are **interactive**: zoom, pan, hover for exact values, toggle authors on/off by clicking the legend.
+
+| Tab | Charts |
+|---|---|
+| Overview | Words inserted & deleted, share of words written (donut), cumulative words over time |
+| Timeline | Daily writing intensity, session timeline (dot strip) |
+| Patterns | Sessions by hour × weekday (heatmap), sessions per week, insertions vs. deletions |
+| Chapters | Top 20 chapters, chapter ownership %, per-chapter author split |
+
+### CLI scripts (optional)
+
+```bash
+python fetch_diffs.py          # fetch & cache data only (no web server)
+python visualize_contributions.py  # generate static PNG charts
+```
 
 ---
 
@@ -119,9 +103,11 @@ Opens a local web dashboard at `http://localhost:5000` that lets you:
 config.example.json         ← template — copy to config.json
 config.json                 ← your settings (gitignored)
 app.py                      ← web dashboard (Flask)
+data.py                     ← data loading and parsing
+charts.py                   ← Plotly chart builders
 templates/index.html        ← web UI
 fetch_diffs.py              ← fetch & cache data from Overleaf
-visualize_contributions.py  ← generate charts from cached data
+visualize_contributions.py  ← generate static PNG charts (CLI)
 usage.json                  ← cached update list (gitignored)
 diff_cache.json             ← cached diffs (gitignored)
 state.json                  ← last-fetch timestamp (gitignored)

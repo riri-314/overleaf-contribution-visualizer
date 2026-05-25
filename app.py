@@ -3,7 +3,7 @@ import json, subprocess, threading
 from datetime import datetime
 from pathlib import Path
 
-from flask import Flask, jsonify, send_file, render_template
+from flask import Flask, jsonify, render_template
 
 app = Flask(__name__)
 
@@ -30,11 +30,10 @@ def index():
 
 @app.route("/api/status")
 def api_status():
-    cfg = json.loads(CONFIG_FILE.read_text())
-    state = load_state()
+    cfg          = json.loads(CONFIG_FILE.read_text())
+    state        = load_state()
     cache_entries = len(json.loads(CACHE_FILE.read_text())) if CACHE_FILE.exists() else 0
     update_count  = len(json.loads(USAGE_FILE.read_text()).get("updates", [])) if USAGE_FILE.exists() else 0
-    charts = sorted(p.name for p in Path(".").glob("contributions_*.png"))
 
     with _lock:
         task = dict(_task)
@@ -48,8 +47,17 @@ def api_status():
         "cache_entries": cache_entries,
         "update_count":  update_count,
         "task":          task,
-        "charts":        charts,
     })
+
+
+@app.route("/api/charts")
+def api_charts():
+    from data import load_data
+    from charts import build_all_charts
+    data = load_data(CONFIG_FILE, USAGE_FILE, CACHE_FILE)
+    if data is None:
+        return jsonify({})
+    return jsonify(build_all_charts(data))
 
 
 def _run(clear_cache: bool):
@@ -71,17 +79,9 @@ def _run(clear_cache: bool):
         state["last_fetch"] = datetime.now().isoformat()
         save_state(state)
 
-        with _lock:
-            _task["message"] = "Generating charts…"
-
-        r2 = subprocess.run(["python3", "visualize_contributions.py"], capture_output=True, text=True)
         last_line = (r.stdout.strip().splitlines() or ["Done"])[-1]
         with _lock:
-            _task.update(
-                running=False,
-                message=last_line,
-                error=r2.stderr if r2.returncode != 0 else None,
-            )
+            _task.update(running=False, message=last_line, error=None)
     except Exception as e:
         with _lock:
             _task.update(running=False, message="", error=str(e))
@@ -103,14 +103,6 @@ def api_refetch():
             return jsonify({"error": "A task is already running"}), 409
     threading.Thread(target=_run, kwargs={"clear_cache": True}, daemon=True).start()
     return jsonify({"ok": True})
-
-
-@app.route("/charts/<name>")
-def chart(name):
-    p = Path(name)
-    if not name.startswith("contributions_") or not name.endswith(".png") or not p.exists():
-        return "", 404
-    return send_file(p.resolve(), mimetype="image/png")
 
 
 if __name__ == "__main__":
