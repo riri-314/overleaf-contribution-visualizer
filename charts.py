@@ -12,6 +12,7 @@ _LAYOUT_DEFAULTS = dict(
     plot_bgcolor="white",
     margin=dict(l=60, r=20, t=50, b=50),
     hoverlabel=dict(bgcolor="white", font_size=12),
+    autosize=True,  # fill container div; height is controlled by CSS
 )
 
 
@@ -106,7 +107,6 @@ def chart_daily_intensity(df, colors, user_labels):
     return _apply(fig,
         title="Daily Writing Intensity",
         hovermode="x unified",
-        height=max(300, 220 * len(user_labels)),
     )
 
 
@@ -132,7 +132,6 @@ def chart_session_timeline(sdf, colors, user_labels):
     return _apply(fig,
         title="Session Timeline",
         hovermode="closest",
-        height=max(250, 170 * len(user_labels)),
     )
 
 
@@ -250,7 +249,6 @@ def chart_top_chapters(df, colors, user_labels):
         xaxis_tickformat=",",
         yaxis=dict(autorange="reversed", showgrid=False),
         legend=dict(orientation="h", y=1.05, x=1, xanchor="right"),
-        height=550,
     )
 
 
@@ -283,7 +281,6 @@ def chart_chapter_ownership(df, colors, user_labels):
         title="Chapter Ownership (% words per author)",
         xaxis=dict(showgrid=False),
         yaxis=dict(showgrid=False),
-        height=max(320, len(pct) * 28 + 80),
     )
 
 

@@ -165,10 +165,19 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: .75rem .75rem .25rem;
-      min-height: 380px;
+      padding: .75rem .75rem .5rem;
+      height: 420px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
-    .chart-card.tall { min-height: 560px; }
+    .chart-card.tall { height: 600px; }
+
+    /* Chart divs fill the remaining card height */
+    .chart-card > [id^="chart-"] {
+      flex: 1;
+      min-height: 0;
+    }
 
     /* ── Empty state ── */
     #no-data {
