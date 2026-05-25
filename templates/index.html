@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overleaf Contribution Visualizer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f0f2f5;
+      --surface:  #ffffff;
+      --border:   #e2e8f0;
+      --primary:  #4C72B0;
+      --danger:   #C44E52;
+      --text:     #1a202c;
+      --muted:    #718096;
+      --radius:   10px;
+      --shadow:   0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      height: 56px;
+    }
+    header h1 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: .02em;
+    }
+    header .dot { color: var(--border); }
+
+    #project-link {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+    }
+    #project-link:hover { text-decoration: underline; }
+    #project-link svg { opacity: .6; }
+
+    /* ── Main layout ── */
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+    }
+
+    /* ── Info + action bar ── */
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .stats {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .55rem 1rem;
+      font-size: .85rem;
+    }
+    .stat span { font-weight: 600; color: var(--primary); }
+
+    .actions {
+      display: flex;
+      gap: .6rem;
+      align-items: center;
+      margin-left: auto;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      border: none;
+      border-radius: 7px;
+      padding: .5rem 1.1rem;
+      font-size: .875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    button:not(:disabled):active { transform: scale(.97); }
+
+    #btn-fetch   { background: var(--primary); color: #fff; }
+    #btn-refetch { background: var(--danger);  color: #fff; }
+    #btn-fetch:not(:disabled):hover   { opacity: .88; }
+    #btn-refetch:not(:disabled):hover { opacity: .88; }
+
+    /* ── Status bar ── */
+    #status-bar {
+      display: none;
+      align-items: center;
+      gap: .6rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .6rem 1rem;
+      font-size: .85rem;
+      margin-bottom: 1.25rem;
+    }
+    #status-bar.visible { display: flex; }
+    #status-bar.error { border-color: var(--danger); background: #fff5f5; color: var(--danger); }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid #cbd5e0;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── No-data placeholder ── */
+    #no-data {
+      display: none;
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+    }
+    #no-data p { margin-top: .5rem; font-size: .9rem; }
+
+    /* ── Chart grid ── */
+    #chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
+    @media (max-width: 860px) {
+      #chart-grid { grid-template-columns: 1fr; }
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow .2s, transform .2s;
+    }
+    .chart-card:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,.12);
+      transform: translateY(-2px);
+    }
+    .chart-card img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .chart-label {
+      padding: .6rem 1rem;
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    /* ── Modal ── */
+    #modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    #modal.visible { display: flex; }
+
+    #modal-inner {
+      position: relative;
+      max-width: 95vw;
+      max-height: 90vh;
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    }
+    #modal img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    #modal-close {
+      position: absolute;
+      top: .5rem; right: .5rem;
+      background: rgba(0,0,0,.5);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 32px; height: 32px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    #modal-close:hover { background: rgba(0,0,0,.8); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Overleaf Visualizer</h1>
+  <span class="dot">›</span>
+  <a id="project-link" href="#" target="_blank" rel="noopener">
+    <span id="project-title">Loading…</span>
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3.5 1H11M11 1V8.5M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
+</header>
+
+<main>
+  <div class="top-bar">
+    <div class="stats">
+      <div class="stat">Last fetched: <span id="last-fetch">—</span></div>
+      <div class="stat">Updates tracked: <span id="update-count">—</span></div>
+      <div class="stat">Diffs cached: <span id="cache-entries">—</span></div>
+    </div>
+    <div class="actions">
+      <button id="btn-fetch">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.86"/>
+        </svg>
+        Fetch Updates
+      </button>
+      <button id="btn-refetch">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.67 9a9 9 0 0 1 14.8-2.3L23 10M1 14l4.64 3.36A9 9 0 0 0 20.33 15"/>
+        </svg>
+        Refetch All
+      </button>
+    </div>
+  </div>
+
+  <div id="status-bar">
+    <div class="spinner" id="status-spinner"></div>
+    <span id="status-msg"></span>
+  </div>
+
+  <div id="no-data">
+    <strong>No charts yet.</strong>
+    <p>Click <em>Fetch Updates</em> to download data and generate visualizations.</p>
+  </div>
+
+  <div id="chart-grid"></div>
+</main>
+
+<!-- Modal -->
+<div id="modal">
+  <div id="modal-inner">
+    <button id="modal-close">✕</button>
+    <img id="modal-img" src="" alt="">
+  </div>
+</div>
+
+<script>
+  const CHART_TITLES = {
+    "contributions_overview":  "Contribution Overview",
+    "contributions_temporal":  "Temporal Patterns",
+    "contributions_files":     "Chapter Breakdown",
+    "contributions_timeline":  "Contribution Timeline",
+    "contributions_intensity": "Daily Writing Intensity",
+    "contributions_patterns":  "Editing Patterns",
+  };
+
+  function timeAgo(iso) {
+    if (!iso) return "Never";
+    const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+    if (diff < 60)   return "Just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  }
+
+  let pollTimer = null;
+  let chartTimestamp = Date.now();
+
+  async function fetchStatus() {
+    const res = await fetch("/api/status");
+    const d   = await res.json();
+
+    // Header
+    const link = document.getElementById("project-link");
+    document.getElementById("project-title").textContent = d.project.title;
+    link.href = d.project.url;
+
+    // Stats
+    document.getElementById("last-fetch").textContent    = timeAgo(d.last_fetch);
+    document.getElementById("update-count").textContent  = d.update_count;
+    document.getElementById("cache-entries").textContent = d.cache_entries;
+
+    // Status bar
+    const bar = document.getElementById("status-bar");
+    const spinner = document.getElementById("status-spinner");
+    if (d.task.running) {
+      bar.className = "visible";
+      bar.classList.remove("error");
+      spinner.style.display = "";
+      document.getElementById("status-msg").textContent = d.task.message;
+    } else if (d.task.error) {
+      bar.className = "visible error";
+      spinner.style.display = "none";
+      document.getElementById("status-msg").textContent = "Error: " + d.task.error;
+    } else if (d.task.message) {
+      bar.className = "visible";
+      bar.classList.remove("error");
+      spinner.style.display = "none";
+      document.getElementById("status-msg").textContent = d.task.message;
+    } else {
+      bar.className = "";
+    }
+
+    // Buttons
+    const busy = d.task.running;
+    document.getElementById("btn-fetch").disabled   = busy;
+    document.getElementById("btn-refetch").disabled = busy;
+
+    // Charts
+    const wasRunning = !!pollTimer;
+    if (!busy && wasRunning) {
+      chartTimestamp = Date.now(); // bust cache after a task finishes
+    }
+    renderCharts(d.charts);
+
+    // Polling
+    if (busy) {
+      clearTimeout(pollTimer);
+      pollTimer = setTimeout(fetchStatus, 1500);
+    } else {
+      pollTimer = null;
+    }
+  }
+
+  function renderCharts(charts) {
+    const grid = document.getElementById("chart-grid");
+    const noData = document.getElementById("no-data");
+
+    if (!charts.length) {
+      grid.innerHTML = "";
+      noData.style.display = "block";
+      return;
+    }
+    noData.style.display = "none";
+
+    // Preserve existing cards; add/update only what changed
+    const existing = new Set([...grid.querySelectorAll(".chart-card")].map(c => c.dataset.name));
+    const incoming = new Set(charts);
+
+    // Remove cards no longer present
+    grid.querySelectorAll(".chart-card").forEach(c => {
+      if (!incoming.has(c.dataset.name)) c.remove();
+    });
+
+    charts.forEach(name => {
+      const key = name.replace("contributions_", "").replace(".png", "");
+      const label = CHART_TITLES[`contributions_${key}`] || key;
+      const url = `/charts/${name}?t=${chartTimestamp}`;
+
+      if (existing.has(name)) {
+        // Update src for cache-busting after refetch
+        const img = grid.querySelector(`[data-name="${name}"] img`);
+        if (img && !img.src.includes(`t=${chartTimestamp}`)) img.src = url;
+        return;
+      }
+
+      const card = document.createElement("div");
+      card.className = "chart-card";
+      card.dataset.name = name;
+      card.innerHTML = `<img src="${url}" alt="${label}" loading="lazy"><div class="chart-label">${label}</div>`;
+      card.addEventListener("click", () => openModal(url, label));
+      grid.appendChild(card);
+    });
+  }
+
+  // Modal
+  const modal = document.getElementById("modal");
+  const modalImg = document.getElementById("modal-img");
+
+  function openModal(src, alt) {
+    modalImg.src = src;
+    modalImg.alt = alt;
+    modal.classList.add("visible");
+  }
+  document.getElementById("modal-close").addEventListener("click", () => modal.classList.remove("visible"));
+  modal.addEventListener("click", e => { if (e.target === modal) modal.classList.remove("visible"); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") modal.classList.remove("visible"); });
+
+  // Actions
+  async function startTask(endpoint, confirmMsg) {
+    if (confirmMsg && !confirm(confirmMsg)) return;
+    await fetch(endpoint, { method: "POST" });
+    pollTimer = setTimeout(fetchStatus, 300);
+  }
+
+  document.getElementById("btn-fetch").addEventListener("click",
+    () => startTask("/api/fetch"));
+  document.getElementById("btn-refetch").addEventListener("click",
+    () => startTask("/api/refetch", "This will clear the diff cache and re-download everything. Continue?"));
+
+  // Init
+  fetchStatus();
+</script>
+</body>
+</html>

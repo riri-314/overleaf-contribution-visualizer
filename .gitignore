@@ -8,6 +8,9 @@ diff_cache.json
 # Generated charts
 contributions_*.png
 
+# Runtime state
+state.json
+
 # Python
 __pycache__/
 *.pyc

@@ -98,17 +98,33 @@ Produces six PNG files:
 
 A text summary is also printed to the terminal.
 
+### Web interface (alternative)
+
+```bash
+python app.py
+```
+
+Opens a local web dashboard at `http://localhost:5000` that lets you:
+- See the tracked project (clickable link to Overleaf)
+- See when data was last fetched and how many updates/diffs are cached
+- Click **Fetch Updates** to pull only new changes and regenerate charts
+- Click **Refetch All** to clear the diff cache and re-download everything
+- Browse all six charts in a grid; click any to open it full-size
+
 ---
 
 ## File overview
 
 ```
-config.example.json   ← template — copy to config.json
-config.json           ← your settings (gitignored)
-fetch_diffs.py        ← step 1: fetch & cache data from Overleaf
-visualize_contributions.py  ← step 2: generate charts
-usage.json            ← cached update list (gitignored)
-diff_cache.json       ← cached diffs (gitignored)
+config.example.json         ← template — copy to config.json
+config.json                 ← your settings (gitignored)
+app.py                      ← web dashboard (Flask)
+templates/index.html        ← web UI
+fetch_diffs.py              ← fetch & cache data from Overleaf
+visualize_contributions.py  ← generate charts from cached data
+usage.json                  ← cached update list (gitignored)
+diff_cache.json             ← cached diffs (gitignored)
+state.json                  ← last-fetch timestamp (gitignored)
 requirements.txt
 ```
 
