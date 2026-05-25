@@ -1,121 +1,205 @@
 # Overleaf Contribution Visualizer
 
-Fetches the edit history of an Overleaf project and produces contribution charts
-broken down by author — words inserted/deleted, editing patterns, chapter ownership,
-and more.
+Analyze an Overleaf project's edit history and see who contributed what over
+time. The project includes:
 
-Works with **any** Overleaf instance (self-hosted or overleaf.com).
+- A Flask web dashboard with interactive Plotly charts
+- An optional PNG report generator for static images
+- Incremental caching so repeated fetches only download new diffs
 
----
+It works with overleaf.com and self-hosted Overleaf instances.
 
-## Requirements
+## Quick Start
 
-Python 3.10+
+Requirements: Python 3.10+
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-```
-
----
-
-## Setup
-
-### 1. Copy the example config
-
-```bash
 cp config.example.json config.json
 ```
 
-### 2. Fill in `config.json`
+Edit `config.json`:
 
 ```json
 {
-  "base_url":   "https://overleaf.example.com",
+  "base_url": "https://overleaf.example.com",
   "project_id": "YOUR_PROJECT_ID",
-  "cookie":     "YOUR_OVERLEAF_SESSION_COOKIE",
-  "title":      "My Thesis",
-  "users": [
-    {"name": "Alice Example", "color": "#4C72B0"},
-    {"name": "Bob Example",   "color": "#DD8452"}
-  ]
+  "cookie": "YOUR_OVERLEAF_SESSION_COOKIE",
+  "title": "My Thesis"
 }
 ```
 
-| Field | Description |
-|---|---|
-| `base_url` | Root URL of your Overleaf instance |
-| `project_id` | The hex ID in your project's URL, e.g. `…/project/69afe042…` |
-| `cookie` | Your `overleaf.sid` session cookie (see below) |
-| `title` | Label shown in chart titles |
-| `users` | *(optional)* List of authors with name and hex color. If omitted, authors are auto-detected from the data and assigned colors automatically. |
-
-> **Security:** `config.json` is listed in `.gitignore` so the cookie is never
-> accidentally committed. Alternatively, export `OVERLEAF_COOKIE=<value>` in your
-> shell — that takes precedence over the value in the file.
-
-### How to get the session cookie
-
-1. Open your Overleaf project in a browser.
-2. Open DevTools → **Application** tab → **Cookies**.
-3. Copy the value of the `overleaf.sid` cookie.
-
-> **WARNING: never share this cookie with anyone.**
-> It grants full access to your Overleaf account — anyone who has it can read,
-> edit, or delete all your projects. Treat it like a password.
-> If you accidentally expose it (e.g. in a screenshot or a public repo), log out
-> of Overleaf immediately to invalidate it.
-
----
-
-## Usage
+Then start the dashboard:
 
 ```bash
 python app.py
 ```
 
-Open `http://localhost:5000`. From the dashboard you can:
-- See the tracked project — click its name to open it directly in Overleaf
-- See when data was last fetched and how many updates/diffs are cached
-- Click **Fetch Updates** to pull only new changes (incremental, safe to re-run)
-- Click **Refetch All** to clear the diff cache and re-download everything
+Open:
 
-All charts are **interactive**: zoom, pan, hover for exact values, toggle authors on/off by clicking the legend.
+```text
+http://127.0.0.1:5000
+```
+
+Click **Fetch Updates** the first time you open the dashboard.
+
+## Config
+
+| Field | Description |
+|---|---|
+| `base_url` | Root URL of your Overleaf instance, for example `https://www.overleaf.com` |
+| `project_id` | The project ID from the Overleaf URL |
+| `cookie` | Your `overleaf.sid` session cookie |
+| `title` | Project name shown in the dashboard |
+
+You can also provide the cookie through the environment:
+
+```bash
+export OVERLEAF_COOKIE="your-cookie-value"
+```
+
+`OVERLEAF_COOKIE` takes precedence over the value in `config.json`.
+
+## Getting The Cookie
+
+1. Open your Overleaf project in a browser.
+2. Open DevTools.
+3. Go to Application, then Cookies.
+4. Select your Overleaf domain.
+5. Copy the value of the `overleaf.sid` cookie.
+
+Never share this cookie. It grants access to your Overleaf account. If it is
+exposed, log out of Overleaf to invalidate it.
+
+## Web Dashboard
+
+Run:
+
+```bash
+python app.py
+```
+
+The dashboard lets you:
+
+- Fetch only new project updates
+- Refetch all diffs if you want to rebuild the cache
+- View interactive charts by author, date, session, and chapter
+- Toggle authors in chart legends
+- Hover, zoom, and pan inside Plotly charts
+
+Charts are grouped into tabs:
 
 | Tab | Charts |
 |---|---|
-| Overview | Words inserted & deleted, share of words written (donut), cumulative words over time |
-| Timeline | Daily writing intensity, session timeline (dot strip) |
-| Patterns | Sessions by hour × weekday (heatmap), sessions per week, insertions vs. deletions |
-| Chapters | Top 20 chapters, chapter ownership %, per-chapter author split |
+| Overview | Words inserted/deleted, share of words written, cumulative words over time |
+| Timeline | Daily writing intensity, session timeline |
+| Patterns | Sessions by hour and weekday, sessions per week, insertions vs deletions |
+| Chapters | Top chapters, chapter ownership, per-chapter author split |
 
-### CLI scripts (optional)
+## Local Network Access
+
+`app.py` listens on `0.0.0.0`, so another device on the same local network can
+open the dashboard.
+
+Find this machine's local IP:
 
 ```bash
-python fetch_diffs.py          # fetch & cache data only (no web server)
-python visualize_contributions.py  # generate static PNG charts
+hostname -I
 ```
 
----
+Then open this URL from another device on the same Wi-Fi or LAN:
 
-## File overview
-
-```
-config.example.json         ← template — copy to config.json
-config.json                 ← your settings (gitignored)
-app.py                      ← web dashboard (Flask)
-data.py                     ← data loading and parsing
-charts.py                   ← Plotly chart builders
-templates/index.html        ← web UI
-fetch_diffs.py              ← fetch & cache data from Overleaf
-visualize_contributions.py  ← generate static PNG charts (CLI)
-usage.json                  ← cached update list (gitignored)
-diff_cache.json             ← cached diffs (gitignored)
-state.json                  ← last-fetch timestamp (gitignored)
-requirements.txt
+```text
+http://YOUR_LOCAL_IP:5000
 ```
 
----
+Only do this on a trusted network, because the dashboard can expose project
+metadata and contribution data.
 
-## Disclaimer
+## Static PNG Reports
 
-This code was written by [Claude Code](https://claude.ai/code), Anthropic's AI coding assistant.
+The PNG generator is optional but useful for reports, slides, or sharing static
+figures.
+
+First fetch data through either the web dashboard or the CLI:
+
+```bash
+python fetch_diffs.py
+```
+
+Then generate PNG files:
+
+```bash
+python visualize_contributions.py
+```
+
+It writes:
+
+- `contributions_overview.png`
+- `contributions_temporal.png`
+- `contributions_files.png`
+- `contributions_timeline.png`
+- `contributions_intensity.png`
+- `contributions_patterns.png`
+
+The PNG workflow uses `matplotlib` and `seaborn`, so those dependencies are kept
+in `requirements.txt`.
+
+## Data Files
+
+These files are generated locally and are ignored by git:
+
+| File | Purpose |
+|---|---|
+| `config.json` | Your private Overleaf settings and cookie |
+| `usage.json` | Cached Overleaf update list |
+| `diff_cache.json` | Cached per-file diffs |
+| `state.json` | Last successful dashboard fetch time |
+
+## Project Files
+
+| File | Purpose |
+|---|---|
+| `app.py` | Flask server and API routes |
+| `templates/index.html` | Web dashboard UI |
+| `data.py` | Parses cached Overleaf data |
+| `charts.py` | Builds interactive Plotly charts |
+| `fetch_diffs.py` | Fetches update and diff data from Overleaf |
+| `visualize_contributions.py` | Generates static PNG reports |
+| `config.example.json` | Template for `config.json` |
+| `requirements.txt` | Python dependencies |
+
+## Troubleshooting
+
+- No charts: click **Fetch Updates** first, or run `python fetch_diffs.py`.
+- Login or permission errors: refresh the `overleaf.sid` cookie in `config.json`.
+- Another device cannot connect: check that both devices are on the same network
+  and that your firewall allows port `5000`.
+- Missing PNG dependencies: run `pip install -r requirements.txt` inside your
+  virtual environment.
+
+## Optional: Author Names And Colors
+
+By default, authors are detected from the Overleaf data and colors are assigned
+automatically.
+
+If you want stable author order, custom display names, or custom colors, add a
+`users` field to `config.json`:
+
+```json
+{
+  "base_url": "https://overleaf.example.com",
+  "project_id": "YOUR_PROJECT_ID",
+  "cookie": "YOUR_OVERLEAF_SESSION_COOKIE",
+  "title": "My Thesis",
+  "users": [
+    {"name": "Alice Example", "color": "#4C72B0"},
+    {"name": "Bob Example", "color": "#DD8452"}
+  ]
+}
+```
+
+Use the author names exactly as they appear in the fetched Overleaf data. The
+order in this list is also used for chart legends and comparisons.

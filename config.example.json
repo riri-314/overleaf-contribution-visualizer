@@ -2,11 +2,5 @@
   "base_url":   "https://overleaf.example.com",
   "project_id": "YOUR_PROJECT_ID",
   "cookie":     "YOUR_OVERLEAF_SESSION_COOKIE",
-  "title":      "My Thesis",
-
-  "_comment_users": "Optional — authors are auto-detected from the data if omitted.",
-  "users": [
-    {"name": "Alice Example", "color": "#4C72B0"},
-    {"name": "Bob Example",   "color": "#DD8452"}
-  ]
+  "title":      "My Thesis"
 }
