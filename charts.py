@@ -41,7 +41,7 @@ def chart_words_overview(df, colors, user_labels):
         title="Words Inserted & Deleted",
         barmode="group",
         yaxis_tickformat=",",
-        legend=dict(orientation="h", y=1.1, x=1, xanchor="right"),
+        legend=dict(x=0.99, y=0.99, xanchor="right", yanchor="top"),
     )
 
 
@@ -80,7 +80,7 @@ def chart_cumulative(df, colors, colors_rgba, user_labels):
         yaxis_title="Cumulative words",
         yaxis_tickformat=",",
         hovermode="x unified",
-        legend=dict(orientation="h", y=1.1, x=1, xanchor="right"),
+        legend=dict(x=0.99, y=0.99, xanchor="right", yanchor="top"),
     )
 
 
@@ -176,7 +176,7 @@ def chart_sessions_per_week(sdf, colors, user_labels):
         barmode="group",
         xaxis_title="Week",
         yaxis_title="Sessions",
-        legend=dict(orientation="h", y=1.1, x=1, xanchor="right"),
+        legend=dict(x=0.99, y=0.99, xanchor="right", yanchor="top"),
     )
 
 
@@ -213,7 +213,7 @@ def chart_ins_vs_del(df, colors, user_labels):
         yaxis_title="Words deleted",
         xaxis_tickformat=",",
         yaxis_tickformat=",",
-        legend=dict(orientation="h", y=1.1, x=1, xanchor="right"),
+        legend=dict(x=0.99, y=0.99, xanchor="right", yanchor="top"),
     )
 
 
@@ -248,7 +248,7 @@ def chart_top_chapters(df, colors, user_labels):
         xaxis_title="Words inserted",
         xaxis_tickformat=",",
         yaxis=dict(autorange="reversed", showgrid=False),
-        legend=dict(orientation="h", y=1.05, x=1, xanchor="right"),
+        legend=dict(x=0.99, y=0.99, xanchor="right", yanchor="top"),
     )
 
 
@@ -330,7 +330,7 @@ def chart_chapter_scatter(df, colors, user_labels):
         yaxis_title=f"Words by {u2}",
         xaxis_tickformat=",",
         yaxis_tickformat=",",
-        legend=dict(orientation="h", y=1.1, x=1, xanchor="right"),
+        legend=dict(x=0.99, y=0.99, xanchor="right", yanchor="top"),
     )
 
 
