@@ -1,13 +1,40 @@
 # Overleaf Contribution Visualizer
 
-Analyze an Overleaf project's edit history and see who contributed what over
-time. The project includes:
+Turn an Overleaf project's edit history into a clean, interactive contribution
+dashboard. See who wrote what, when the work happened, which files changed the
+most, and how the project evolved over time.
 
-- A Flask web dashboard with interactive Plotly charts
-- An optional PNG report generator for static images
-- Incremental caching so repeated fetches only download new diffs
+The project includes:
+
+- A Flask dashboard with interactive Plotly charts
+- Incremental fetching so repeated runs only download missing diffs
+- Clear warnings when local data is incomplete
+- Optional PNG report generation for slides or static exports
+- Light and dark themes for demos and daily use
 
 It works with overleaf.com and self-hosted Overleaf instances.
+
+## Preview
+
+The dashboard is built for quick inspection: fetch updates, switch tabs, hover
+for exact values, and spot contribution patterns without digging through raw
+Overleaf history.
+
+### Overview
+
+<img src="pictures/overview.png" alt="Overview dashboard with contribution totals, share of words written, and cumulative writing over time" width="100%">
+
+### Timeline
+
+<img src="pictures/timeline.png" alt="Timeline dashboard showing daily writing intensity by contributor" width="100%">
+
+### Patterns
+
+<img src="pictures/patterns.png" alt="Patterns dashboard with hourly activity, weekly sessions, and insertion versus deletion charts" width="100%">
+
+### Chapters
+
+<img src="pictures/chapters.png" alt="Chapters dashboard with top chapters, ownership heatmap, and chapter split chart" width="100%">
 
 ## Quick Start
 
@@ -85,16 +112,16 @@ The dashboard lets you:
 
 - Fetch only new project updates
 - Refetch all diffs if you want to rebuild the cache
-- View interactive charts by author, date, session, and chapter
-- Toggle authors in chart legends
+- View interactive charts by author, date, activity pattern, and chapter
 - Hover, zoom, and pan inside Plotly charts
+- Detect incomplete cached data and retry missing diffs
 
 Charts are grouped into tabs:
 
 | Tab | Charts |
 |---|---|
 | Overview | Words inserted/deleted, share of words written, cumulative words over time |
-| Timeline | Daily writing intensity, session timeline |
+| Timeline | Daily writing intensity |
 | Patterns | Sessions by hour and weekday, sessions per week, insertions vs deletions |
 | Chapters | Top chapters, chapter ownership, per-chapter author split |
 
@@ -168,6 +195,7 @@ These files are generated locally and are ignored by git:
 | `charts.py` | Builds interactive Plotly charts |
 | `fetch_diffs.py` | Fetches update and diff data from Overleaf |
 | `visualize_contributions.py` | Generates static PNG reports |
+| `pictures/` | README screenshots used to preview the dashboard |
 | `config.example.json` | Template for `config.json` |
 | `requirements.txt` | Python dependencies |
 
