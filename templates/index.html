@@ -361,8 +361,8 @@
   </div>
 
   <div id="no-data">
-    <strong>No data yet.</strong>
-    <p>Click <em>Fetch Updates</em> to download data from Overleaf.</p>
+    <strong id="no-data-title">No data yet.</strong>
+    <p id="no-data-msg">Click <em>Fetch Updates</em> to download data from Overleaf.</p>
   </div>
 
   <div id="dashboard" style="display:none">
@@ -524,33 +524,84 @@
   // ── Status polling ────────────────────────────────────────────────────────
   let pollTimer = null;
 
+  function cleanErrorMessage(message) {
+    return String(message || "Request failed.").replace(/^ERROR:\s*/i, "");
+  }
+
+  function showStatus(message, options = {}) {
+    const bar     = document.getElementById("status-bar");
+    const spinner = document.getElementById("status-spinner");
+    const text    = document.getElementById("status-msg");
+
+    bar.className = options.error ? "show is-error" : "show";
+    spinner.style.display = options.running ? "" : "none";
+    text.textContent = options.error
+      ? "Error: " + cleanErrorMessage(message)
+      : message;
+  }
+
+  function hideStatus() {
+    document.getElementById("status-bar").className = "";
+  }
+
+  async function readJsonResponse(res) {
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (e) {
+      data = {};
+    }
+
+    if (!res.ok) {
+      throw new Error(data.error || `Request failed with HTTP ${res.status}.`);
+    }
+
+    return data;
+  }
+
   async function fetchStatus() {
-    const res = await fetch("/api/status");
-    const d   = await res.json();
+    let d;
+    try {
+      const res = await fetch("/api/status");
+      d = await readJsonResponse(res);
+    } catch (error) {
+      if (pollTimer) {
+        showStatus(
+          (error.message || "Could not load server status.") + " Retrying...",
+          { running: true }
+        );
+        clearTimeout(pollTimer);
+        pollTimer = setTimeout(fetchStatus, 1500);
+        return;
+      }
+
+      showStatus(error.message || "Could not load server status.", { error: true });
+      document.getElementById("btn-fetch").disabled = false;
+      document.getElementById("btn-refetch").disabled = false;
+      clearTimeout(pollTimer);
+      pollTimer = null;
+      return;
+    }
 
     document.getElementById("project-title").textContent = d.project.title;
-    document.getElementById("project-link").href         = d.project.url;
+    const projectLink = document.getElementById("project-link");
+    projectLink.href = d.project.url;
+    projectLink.toggleAttribute("aria-disabled", d.project.url === "#");
     document.getElementById("last-fetch").textContent    = timeAgo(d.last_fetch);
     document.getElementById("update-count").textContent  = d.update_count;
     document.getElementById("cache-entries").textContent = d.cache_entries;
-
-    const bar     = document.getElementById("status-bar");
-    const spinner = document.getElementById("status-spinner");
+    updateEmptyState(d);
 
     if (d.task.running) {
-      bar.className = "show";
-      spinner.style.display = "";
-      document.getElementById("status-msg").textContent = d.task.message;
+      showStatus(d.task.message, { running: true });
     } else if (d.task.error) {
-      bar.className = "show is-error";
-      spinner.style.display = "none";
-      document.getElementById("status-msg").textContent = "Error: " + d.task.error;
+      showStatus(d.task.error, { error: true });
+    } else if (d.error) {
+      showStatus(d.error, { error: true });
     } else if (d.task.message) {
-      bar.className = "show";
-      spinner.style.display = "none";
-      document.getElementById("status-msg").textContent = d.task.message;
+      showStatus(d.task.message);
     } else {
-      bar.className = "";
+      hideStatus();
     }
 
     document.getElementById("btn-fetch").disabled   = d.task.running;
@@ -568,6 +619,19 @@
 
   // ── Chart rendering ───────────────────────────────────────────────────────
   let _chartsRaw = {};  // cached raw JSON strings from server
+
+  function updateEmptyState(status) {
+    const title = document.getElementById("no-data-title");
+    const msg = document.getElementById("no-data-msg");
+
+    if (status.last_fetch && status.update_count === 0 && status.cache_entries === 0) {
+      title.textContent = "No updates found.";
+      msg.textContent = "Overleaf did not return any project updates yet.";
+    } else {
+      title.textContent = "No data yet.";
+      msg.innerHTML = "Click <em>Fetch Updates</em> to download data from Overleaf.";
+    }
+  }
 
   function resizeVisibleCharts() {
     requestAnimationFrame(() => {
@@ -599,17 +663,34 @@
     document.getElementById("dashboard").style.display = "block";
     document.querySelectorAll('.chart-card').forEach(c => c.classList.add('is-loading'));
 
-    const res = await fetch("/api/charts");
-    _chartsRaw = await res.json();
-
-    document.querySelectorAll('.chart-card').forEach(c => c.classList.remove('is-loading'));
-    renderCharts();
+    try {
+      const res = await fetch("/api/charts");
+      _chartsRaw = await readJsonResponse(res);
+    } catch (error) {
+      _chartsRaw = {};
+      showStatus(error.message || "Could not load charts.", { error: true });
+    } finally {
+      document.querySelectorAll('.chart-card').forEach(c => c.classList.remove('is-loading'));
+      renderCharts();
+    }
   }
 
   // ── Actions ───────────────────────────────────────────────────────────────
   async function startTask(endpoint, confirmMsg) {
     if (confirmMsg && !confirm(confirmMsg)) return;
-    await fetch(endpoint, { method: "POST" });
+    document.getElementById("btn-fetch").disabled = true;
+    document.getElementById("btn-refetch").disabled = true;
+    showStatus("Starting fetch...", { running: true });
+    try {
+      const res = await fetch(endpoint, { method: "POST" });
+      await readJsonResponse(res);
+    } catch (error) {
+      showStatus(error.message || "Could not start fetch.", { error: true });
+      document.getElementById("btn-fetch").disabled = false;
+      document.getElementById("btn-refetch").disabled = false;
+      return;
+    }
+    clearTimeout(pollTimer);
     pollTimer = setTimeout(fetchStatus, 300);
   }
 
