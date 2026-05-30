@@ -265,6 +265,15 @@
     .chart-card > .chart .svg-container {
       max-width: 100%;
     }
+    .chart-card > .chart.is-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      color: var(--muted);
+      font-size: .86rem;
+      text-align: center;
+    }
 
     @media (max-width: 640px) {
       header { padding: 0 1rem; }
@@ -476,9 +485,23 @@
       layout.coloraxis.colorbar = layout.coloraxis.colorbar || {};
       layout.coloraxis.colorbar.tickfont = { color: t.font_color };
     }
+    for (const trace of fig.data || []) {
+      if (!trace.colorbar) continue;
+      trace.colorbar.tickfont = { ...(trace.colorbar.tickfont || {}), color: t.font_color };
+      if (trace.colorbar.title) {
+        if (typeof trace.colorbar.title === 'string') {
+          trace.colorbar.title = { text: trace.colorbar.title, font: { color: t.font_color } };
+        } else {
+          trace.colorbar.title.font = { ...(trace.colorbar.title.font || {}), color: t.font_color };
+        }
+      }
+    }
 
-    // Extra bottom margin so axis labels aren't clipped
-    layout.margin = { ...(layout.margin || {}), b: 65 };
+    // Extra bottom margin so axis labels and bottom legends aren't clipped
+    layout.margin = {
+      ...(layout.margin || {}),
+      b: Math.max((layout.margin && layout.margin.b) || 0, 65),
+    };
   }
 
   function setTheme(dark) {
@@ -670,9 +693,19 @@
     document.getElementById("dashboard").style.display = hasData ? "block" : "none";
     if (!hasData) return;
 
+    document.querySelectorAll(".chart").forEach(el => {
+      const id = el.id.replace(/^chart-/, "");
+      if (_chartsRaw[id]) return;
+      if (el.classList.contains("js-plotly-plot")) Plotly.purge(el);
+      el.classList.add("is-empty");
+      el.textContent = "No chart available for this data.";
+    });
+
     for (const [id, figJson] of Object.entries(_chartsRaw)) {
       const el = document.getElementById("chart-" + id);
       if (!el) continue;
+      el.classList.remove("is-empty");
+      el.textContent = "";
       const fig = JSON.parse(figJson);   // fresh parse so we can mutate safely
       applyPlotlyTheme(fig);
       Plotly.react(el, fig.data, fig.layout, plotlyConfigFor(el));

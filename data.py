@@ -30,7 +30,25 @@ def short_name(path: str) -> str:
 
 
 def is_chapter(path: str) -> bool:
-    return "chapters/" in path and path.endswith(".tex")
+    if not path.endswith(".tex"):
+        return False
+    if "chapters/" in path:
+        return True
+
+    filename = Path(path).name.lower()
+    excluded_names = {
+        "main.tex",
+        "preamble.tex",
+        "macros.tex",
+        "commands.tex",
+        "packages.tex",
+        "settings.tex",
+    }
+    excluded_fragments = ("cover", "template", "titlepage")
+    return (
+        filename not in excluded_names
+        and not any(fragment in filename for fragment in excluded_fragments)
+    )
 
 
 def _hex_to_rgba(hex_color: str, alpha: float = 0.12) -> str:
