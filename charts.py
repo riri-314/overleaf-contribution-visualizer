@@ -300,13 +300,14 @@ def chart_sessions_per_week(sdf, colors, user_labels):
             name=name,
             marker_color=colors.get(name, "#888"),
             hovertemplate="Week of %{x}<br><b>%{y} sessions</b><extra>" + name + "</extra>",
+            showlegend=False,
         ))
     return _apply(fig,
         title="Sessions per Week",
         barmode="stack",
         xaxis_title="Week",
         yaxis_title="Sessions",
-        legend=dict(orientation="h", x=0, y=1.08, xanchor="left", yanchor="bottom"),
+        showlegend=False,
     )
 
 
@@ -320,6 +321,7 @@ def chart_ins_vs_del(df, colors, user_labels):
             y=sub["words_del"].tolist(),
             mode="markers",
             name=name,
+            showlegend=False,
             marker=dict(color=colors.get(name, "#888"), size=7, opacity=0.6,
                         line=dict(width=0.5, color="white")),
             hovertemplate=(
@@ -335,6 +337,7 @@ def chart_ins_vs_del(df, colors, user_labels):
         mode="lines",
         line=dict(dash="dash", color="#aaa", width=1),
         name="ins = del",
+        showlegend=False,
         hoverinfo="skip",
     ))
     return _apply(fig,
@@ -343,7 +346,16 @@ def chart_ins_vs_del(df, colors, user_labels):
         yaxis_title="Words deleted",
         xaxis_tickformat=",",
         yaxis_tickformat=",",
-        legend=dict(x=0.99, y=0.99, xanchor="right", yanchor="top"),
+        showlegend=False,
+        annotations=[dict(
+            x=max_v * 0.78,
+            y=max_v * 0.84,
+            text="ins = del",
+            showarrow=False,
+            font=dict(size=11),
+            xanchor="left",
+            yanchor="bottom",
+        )],
     )
 
 
@@ -373,6 +385,7 @@ def chart_top_chapters(df, colors, user_labels):
             orientation="h",
             marker_color=colors.get(name, "#888"),
             hovertemplate="%{y}<br><b>%{x:,} words</b><extra>" + name + "</extra>",
+            showlegend=False,
         ))
     return _apply(fig,
         title="Top 20 Chapters by Words Inserted",
@@ -380,7 +393,7 @@ def chart_top_chapters(df, colors, user_labels):
         xaxis_title="Words inserted",
         xaxis_tickformat=",",
         yaxis=dict(autorange="reversed", showgrid=False),
-        legend=dict(x=0.99, y=0.99, xanchor="right", yanchor="top"),
+        showlegend=False,
     )
 
 
