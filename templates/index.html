@@ -730,8 +730,9 @@
     for (const [id, figJson] of Object.entries(_chartsRaw)) {
       const el = document.getElementById("chart-" + id);
       if (!el) continue;
+      const wasEmpty = el.classList.contains("is-empty");
       el.classList.remove("is-empty");
-      el.textContent = "";
+      if (wasEmpty) el.textContent = "";
       const fig = JSON.parse(figJson);   // fresh parse so we can mutate safely
       applyPlotlyTheme(fig);
       Plotly.react(el, fig.data, fig.layout, plotlyConfigFor(el));
