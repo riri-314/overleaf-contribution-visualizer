@@ -186,27 +186,54 @@ def chart_cumulative(df, colors, colors_rgba, user_labels):
 # ── Timeline ──────────────────────────────────────────────────────────────────
 
 def chart_daily_intensity(df, colors, user_labels):
-    all_days = pd.date_range(df["day"].min(), df["day"].max(), freq="D")
-    pivot = (
-        df.groupby(["name", "day"])["words_ins"].sum()
-        .unstack(fill_value=0)
-        .reindex(index=user_labels, columns=all_days, fill_value=0)
+    daily = (
+        df.groupby(["name", "day"])["words_ins"]
+        .sum()
+        .reset_index()
     )
-    fig = go.Figure(go.Heatmap(
-        z=pivot.values.tolist(),
-        x=pivot.columns.tolist(),
-        y=pivot.index.tolist(),
-        colorscale="YlGnBu",
-        colorbar=dict(title="words"),
-        hovertemplate="%{y}<br>%{x|%d %b %Y}<br><b>%{z:,} words</b><extra></extra>",
-    ))
+    daily = daily[(daily["words_ins"] > 0) & daily["name"].isin(user_labels)]
+    if daily.empty:
+        return None
+
+    max_words = daily["words_ins"].max()
+    sizeref = 2 * max_words / (34 ** 2) if max_words > 0 else 1
+
+    fig = go.Figure()
+    for name in user_labels:
+        sub = daily[daily["name"] == name]
+        if sub.empty:
+            continue
+        fig.add_trace(go.Scatter(
+            x=sub["day"].tolist(),
+            y=[name] * len(sub),
+            mode="markers",
+            name=name,
+            showlegend=False,
+            marker=dict(
+                color=colors.get(name, "#888"),
+                size=sub["words_ins"].tolist(),
+                sizemode="area",
+                sizeref=sizeref,
+                sizemin=6,
+                opacity=0.76,
+                line=dict(width=1, color="rgba(255,255,255,0.45)"),
+            ),
+            hovertemplate=(
+                "%{y}<br>%{x|%d %b %Y}<br>"
+                "<b>%{marker.size:,} words</b><extra></extra>"
+            ),
+        ))
 
     return _apply(fig,
         title="Daily Writing Intensity",
         xaxis_title="Date",
-        yaxis=dict(showgrid=False, autorange="reversed"),
-        hovermode="x unified",
-        margin=dict(l=_name_margin(user_labels), r=20, t=50, b=50),
+        yaxis=dict(
+            showgrid=True,
+            categoryorder="array",
+            categoryarray=list(reversed(user_labels)),
+        ),
+        hovermode="closest",
+        margin=dict(l=_name_margin(user_labels), r=24, t=50, b=50),
     )
 
 
@@ -459,7 +486,6 @@ def build_all_charts(data: dict) -> dict:
         "share_pie":         lambda: chart_share_pie(df, colors, user_labels),
         "cumulative":        lambda: chart_cumulative(df, colors, colors_rgba, user_labels),
         "daily_intensity":   lambda: chart_daily_intensity(df, colors, user_labels),
-        "session_timeline":  lambda: chart_session_timeline(sdf, colors, user_labels),
         "sessions_heatmap":  lambda: chart_sessions_heatmap(sdf),
         "sessions_per_week": lambda: chart_sessions_per_week(sdf, colors, user_labels),
         "ins_vs_del":        lambda: chart_ins_vs_del(df, colors, user_labels),
