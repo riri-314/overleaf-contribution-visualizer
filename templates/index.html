@@ -439,6 +439,11 @@
       font_color:    '#1a202c',
       grid_color:    '#f0f0f0',
       line_color:    '#e2e8f0',
+      hover_bg:      '#ffffff',
+      hover_border:  '#cbd5e0',
+      hover_font:    '#1a202c',
+      legend_bg:     'rgba(255,255,255,0.90)',
+      legend_border: '#e2e8f0',
     },
     dark: {
       paper_bgcolor: '#141624',
@@ -446,6 +451,11 @@
       font_color:    '#e2e8f0',
       grid_color:    '#252840',
       line_color:    '#252840',
+      hover_bg:      '#1f2336',
+      hover_border:  '#4a5578',
+      hover_font:    '#f8fafc',
+      legend_bg:     'rgba(13,15,26,0.82)',
+      legend_border: '#3a405f',
     },
   };
 
@@ -461,6 +471,23 @@
     layout.plot_bgcolor  = t.plot_bgcolor;
     if (!layout.font) layout.font = {};
     layout.font.color = t.font_color;
+    layout.hoverlabel = {
+      ...(layout.hoverlabel || {}),
+      bgcolor: t.hover_bg,
+      bordercolor: t.hover_border,
+      font: {
+        ...((layout.hoverlabel && layout.hoverlabel.font) || {}),
+        color: t.hover_font,
+        size: 12,
+      },
+    };
+    layout.legend = {
+      ...(layout.legend || {}),
+      bgcolor: t.legend_bg,
+      bordercolor: t.legend_border,
+      borderwidth: 1,
+      font: { ...((layout.legend && layout.legend.font) || {}), color: t.font_color },
+    };
 
     // Update every axis in the figure (handles subplots)
     for (const key of Object.keys(layout)) {

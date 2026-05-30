@@ -17,7 +17,11 @@ _LAYOUT_DEFAULTS = dict(
     paper_bgcolor="white",
     plot_bgcolor="white",
     margin=dict(l=60, r=20, t=50, b=50),
-    hoverlabel=dict(bgcolor="white", font_size=12),
+    hoverlabel=dict(
+        bgcolor="white",
+        bordercolor="#e2e8f0",
+        font=dict(color="#1a202c", size=12),
+    ),
     autosize=True,  # fill container div; height is controlled by CSS
 )
 
