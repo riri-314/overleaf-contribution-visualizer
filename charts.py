@@ -22,6 +22,12 @@ def _apply(fig: go.Figure, **overrides) -> go.Figure:
     return fig
 
 
+def _subplot_spacing(rows: int, preferred: float = 0.06) -> float:
+    if rows <= 1:
+        return 0
+    return min(preferred, 0.8 / (rows - 1))
+
+
 # ── Overview ──────────────────────────────────────────────────────────────────
 
 def chart_words_overview(df, colors, user_labels):
@@ -88,7 +94,7 @@ def chart_cumulative(df, colors, colors_rgba, user_labels):
 def chart_daily_intensity(df, colors, user_labels):
     all_days = pd.date_range(df["day"].min(), df["day"].max(), freq="D")
     fig = make_subplots(rows=len(user_labels), cols=1, shared_xaxes=True,
-                        vertical_spacing=0.06,
+                        vertical_spacing=_subplot_spacing(len(user_labels)),
                         subplot_titles=user_labels)
     for i, name in enumerate(user_labels, start=1):
         sub = df[df["name"] == name].groupby("day")["words_ins"].sum().reindex(all_days, fill_value=0)
@@ -111,7 +117,7 @@ def chart_daily_intensity(df, colors, user_labels):
 
 def chart_session_timeline(sdf, colors, user_labels):
     fig = make_subplots(rows=len(user_labels), cols=1, shared_xaxes=True,
-                        vertical_spacing=0.06,
+                        vertical_spacing=_subplot_spacing(len(user_labels)),
                         subplot_titles=user_labels)
     for i, name in enumerate(user_labels, start=1):
         sub = sdf[sdf["name"] == name]

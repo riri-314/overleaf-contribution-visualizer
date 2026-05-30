@@ -52,6 +52,15 @@ def count_words(text: str) -> int:
     t = re.sub(r"[{}]", " ", t)
     return len(t.split())
 
+def user_id(user: dict) -> str:
+    return str(user.get("id") or user_name(user))
+
+def user_name(user: dict) -> str:
+    parts = [str(user.get("first_name", "")).strip(),
+             str(user.get("last_name", "")).strip()]
+    name = " ".join(part for part in parts if part)
+    return name or str(user.get("email") or user.get("id") or "Unknown user")
+
 # ── Load data ─────────────────────────────────────────────────────────────────
 
 with open("usage.json") as f:
@@ -70,9 +79,7 @@ else:
     seen: dict[str, str] = {}   # id → full name (preserve first-seen order)
     for u in updates:
         for usr in u["meta"]["users"]:
-            uid  = usr["id"]
-            name = f"{usr['first_name']} {usr['last_name']}"
-            seen.setdefault(uid, name)
+            seen.setdefault(user_id(usr), user_name(usr))
     USER_LABELS = list(seen.values())
     COLORS      = {name: _PALETTE[i % len(_PALETTE)]
                    for i, name in enumerate(USER_LABELS)}
@@ -84,7 +91,7 @@ rows = []
 for u in updates:
     start = datetime.fromtimestamp(u["meta"]["start_ts"] / 1000)
     end   = datetime.fromtimestamp(u["meta"]["end_ts"]   / 1000)
-    session_users = {usr["id"]: f"{usr['first_name']} {usr['last_name']}"
+    session_users = {user_id(usr): user_name(usr)
                      for usr in u["meta"]["users"]}
 
     for path in u["pathnames"]:
@@ -97,7 +104,7 @@ for u in updates:
 
         for chunk in diff_data:
             if "i" in chunk:
-                chunk_users = {usr["id"]: f"{usr['first_name']} {usr['last_name']}"
+                chunk_users = {user_id(usr): user_name(usr)
                                for usr in chunk["meta"]["users"]}
                 w = count_words(chunk["i"])
                 c = len(chunk["i"])
@@ -105,7 +112,7 @@ for u in updates:
                     words_ins[uname] += w
                     chars_ins[uname] += c
             elif "d" in chunk:
-                chunk_users = {usr["id"]: f"{usr['first_name']} {usr['last_name']}"
+                chunk_users = {user_id(usr): user_name(usr)
                                for usr in chunk["meta"]["users"]}
                 w = count_words(chunk["d"])
                 for uid, uname in chunk_users.items():
@@ -140,7 +147,7 @@ for u in updates:
     start = datetime.fromtimestamp(u["meta"]["start_ts"] / 1000)
     end   = datetime.fromtimestamp(u["meta"]["end_ts"]   / 1000)
     for usr in u["meta"]["users"]:
-        name = f"{usr['first_name']} {usr['last_name']}"
+        name = user_name(usr)
         srows.append({
             "name": name, "start": start, "end": end,
             "versions": u["toV"] - u["fromV"],

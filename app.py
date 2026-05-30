@@ -59,6 +59,27 @@ def save_state(s):
     write_json_file(STATE_FILE, s)
 
 
+def get_diff_cache_status():
+    usage = load_json_file(USAGE_FILE, {})
+    cache = load_json_file(CACHE_FILE, {})
+    updates = usage.get("updates", [])
+    expected_keys = {
+        f"{u['fromV']}:{u['toV']}:{path}"
+        for u in updates
+        for path in u.get("pathnames", [])
+        if "fromV" in u and "toV" in u
+    }
+    cached_expected = sum(1 for key in expected_keys if key in cache)
+    missing = len(expected_keys) - cached_expected
+
+    return {
+        "expected_diffs": len(expected_keys),
+        "cached_expected_diffs": cached_expected,
+        "missing_diffs": missing,
+        "complete": missing == 0,
+    }
+
+
 def load_json_file(path: Path, default):
     if not path.exists():
         return default
@@ -118,6 +139,7 @@ def api_status():
     state = load_state()
     cache_entries = len(load_json_file(CACHE_FILE, {}))
     update_count = len(load_json_file(USAGE_FILE, {}).get("updates", []))
+    diff_status = get_diff_cache_status()
 
     return jsonify({
         "project": {
@@ -131,6 +153,7 @@ def api_status():
         "last_fetch":    state.get("last_fetch"),
         "cache_entries": cache_entries,
         "update_count":  update_count,
+        "data":          diff_status,
         "task":          task,
         "error":         error,
     })

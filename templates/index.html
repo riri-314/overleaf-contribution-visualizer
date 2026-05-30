@@ -21,6 +21,9 @@
       --shadow:        0 1px 3px rgba(0,0,0,.07), 0 4px 12px rgba(0,0,0,.05);
       --error-bg:      #fff5f5;
       --error-color:   #C44E52;
+      --warning-bg:    #fffaf0;
+      --warning-border:#d69e2e;
+      --warning-color: #9c5a12;
       --spinner-track: #cbd5e0;
       /* Plotly */
       --plot-bg:       #ffffff;
@@ -40,6 +43,9 @@
       --shadow:        0 1px 3px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.2);
       --error-bg:      #2a1515;
       --error-color:   #e06c6c;
+      --warning-bg:    #2a2415;
+      --warning-border:#9a6b1f;
+      --warning-color: #f6c85f;
       --spinner-track: #2d3251;
       /* Plotly */
       --plot-bg:       #141624;
@@ -170,6 +176,11 @@
       border-color: var(--danger);
       background: var(--error-bg);
       color: var(--error-color);
+    }
+    #status-bar.is-warning {
+      border-color: var(--warning-border);
+      background: var(--warning-bg);
+      color: var(--warning-color);
     }
 
     .spinner {
@@ -533,7 +544,11 @@
     const spinner = document.getElementById("status-spinner");
     const text    = document.getElementById("status-msg");
 
-    bar.className = options.error ? "show is-error" : "show";
+    bar.className = options.error
+      ? "show is-error"
+      : options.warning
+        ? "show is-warning"
+        : "show";
     spinner.style.display = options.running ? "" : "none";
     text.textContent = options.error
       ? "Error: " + cleanErrorMessage(message)
@@ -592,12 +607,20 @@
     document.getElementById("cache-entries").textContent = d.cache_entries;
     updateEmptyState(d);
 
+    const missingDiffs = Number(d.data?.missing_diffs || 0);
+
     if (d.task.running) {
       showStatus(d.task.message, { running: true });
     } else if (d.task.error) {
       showStatus(d.task.error, { error: true });
     } else if (d.error) {
       showStatus(d.error, { error: true });
+    } else if (missingDiffs > 0) {
+      const plural = missingDiffs === 1 ? "" : "s";
+      showStatus(
+        `uncomplete data, click on "Fetch Updates" to fix (${missingDiffs} missing diff${plural})`,
+        { warning: true }
+      );
     } else if (d.task.message) {
       showStatus(d.task.message);
     } else {

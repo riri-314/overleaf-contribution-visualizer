@@ -39,6 +39,17 @@ def _hex_to_rgba(hex_color: str, alpha: float = 0.12) -> str:
     return f"rgba({r},{g},{b},{alpha})"
 
 
+def _user_id(user: dict) -> str:
+    return str(user.get("id") or _user_name(user))
+
+
+def _user_name(user: dict) -> str:
+    parts = [str(user.get("first_name", "")).strip(),
+             str(user.get("last_name", "")).strip()]
+    name = " ".join(part for part in parts if part)
+    return name or str(user.get("email") or user.get("id") or "Unknown user")
+
+
 def load_data(config_file: Path, usage_file: Path, cache_file: Path) -> dict | None:
     """Return parsed dataframes and author metadata, or None if data is missing."""
     if not usage_file.exists() or not cache_file.exists():
@@ -60,7 +71,7 @@ def load_data(config_file: Path, usage_file: Path, cache_file: Path) -> dict | N
         seen: dict[str, str] = {}
         for u in updates:
             for usr in u["meta"]["users"]:
-                seen.setdefault(usr["id"], f"{usr['first_name']} {usr['last_name']}")
+                seen.setdefault(_user_id(usr), _user_name(usr))
         user_labels = list(seen.values())
         colors      = {name: _PALETTE[i % len(_PALETTE)] for i, name in enumerate(user_labels)}
 
@@ -69,7 +80,7 @@ def load_data(config_file: Path, usage_file: Path, cache_file: Path) -> dict | N
     for u in updates:
         start = datetime.fromtimestamp(u["meta"]["start_ts"] / 1000)
         end   = datetime.fromtimestamp(u["meta"]["end_ts"]   / 1000)
-        session_users = {usr["id"]: f"{usr['first_name']} {usr['last_name']}"
+        session_users = {_user_id(usr): _user_name(usr)
                          for usr in u["meta"]["users"]}
 
         for path in u.get("pathnames", []):
@@ -81,13 +92,13 @@ def load_data(config_file: Path, usage_file: Path, cache_file: Path) -> dict | N
 
             for chunk in diff_data:
                 if "i" in chunk:
-                    chunk_users = {usr["id"]: f"{usr['first_name']} {usr['last_name']}"
+                    chunk_users = {_user_id(usr): _user_name(usr)
                                    for usr in chunk["meta"]["users"]}
                     w = _count_words(chunk["i"])
                     for uname in chunk_users.values():
                         words_ins[uname] += w
                 elif "d" in chunk:
-                    chunk_users = {usr["id"]: f"{usr['first_name']} {usr['last_name']}"
+                    chunk_users = {_user_id(usr): _user_name(usr)
                                    for usr in chunk["meta"]["users"]}
                     w = _count_words(chunk["d"])
                     for uname in chunk_users.values():
@@ -120,7 +131,7 @@ def load_data(config_file: Path, usage_file: Path, cache_file: Path) -> dict | N
         end   = datetime.fromtimestamp(u["meta"]["end_ts"]   / 1000)
         for usr in u["meta"]["users"]:
             srows.append({
-                "name":  f"{usr['first_name']} {usr['last_name']}",
+                "name":  _user_name(usr),
                 "start": start,
                 "end":   end,
             })
